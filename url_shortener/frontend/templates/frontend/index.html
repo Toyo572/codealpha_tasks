@@ -1,0 +1,358 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>URL Shortener</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f5f5f5;
+      --surface: #ffffff;
+      --border: #e0e0e0;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --danger: #dc2626;
+      --text: #111827;
+      --muted: #6b7280;
+      --radius: 8px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    header h1 { font-size: 1.1rem; font-weight: 600; }
+
+    #auth-status {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-size: 0.875rem;
+      color: var(--muted);
+    }
+
+    .btn {
+      padding: 0.45rem 1rem;
+      border-radius: var(--radius);
+      border: none;
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: background 0.15s;
+    }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover { background: var(--primary-hover); }
+    .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+    .btn-ghost:hover { background: var(--bg); }
+    .btn-danger { background: transparent; color: var(--danger); border: 1px solid #fca5a5; font-size: 0.8rem; padding: 0.3rem 0.6rem; }
+    .btn-danger:hover { background: #fef2f2; }
+
+    main { max-width: 640px; margin: 2.5rem auto; padding: 0 1rem; }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .card h2 { font-size: 1rem; font-weight: 600; margin-bottom: 1rem; }
+
+    input[type="text"], input[type="email"], input[type="password"], input[type="url"] {
+      width: 100%;
+      padding: 0.55rem 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.15s;
+      margin-bottom: 0.75rem;
+    }
+    input:focus { border-color: var(--primary); }
+
+    .input-row { display: flex; gap: 0.5rem; }
+    .input-row input { margin-bottom: 0; }
+
+    .error { color: var(--danger); font-size: 0.82rem; margin-top: 0.25rem; }
+    .success { color: #16a34a; font-size: 0.82rem; margin-top: 0.25rem; }
+
+    #url-list { list-style: none; }
+    #url-list li {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--border);
+      gap: 0.5rem;
+    }
+    #url-list li:last-child { border-bottom: none; }
+
+    .url-info { flex: 1; min-width: 0; }
+    .short-link { font-weight: 500; font-size: 0.9rem; color: var(--primary); text-decoration: none; }
+    .short-link:hover { text-decoration: underline; }
+    .original { font-size: 0.78rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .hits { font-size: 0.75rem; color: var(--muted); white-space: nowrap; }
+
+    #copy-feedback {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      background: #111;
+      color: #fff;
+      padding: 0.5rem 1rem;
+      border-radius: var(--radius);
+      font-size: 0.85rem;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+    }
+    #copy-feedback.show { opacity: 1; }
+
+    .tabs { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
+    .tab { padding: 0.4rem 0.9rem; border-radius: var(--radius); cursor: pointer; font-size: 0.875rem; border: 1px solid var(--border); background: transparent; }
+    .tab.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>✂ URL Shortener</h1>
+  <div id="auth-status">
+    <span id="user-label"></span>
+    <button class="btn btn-ghost" id="logout-btn" hidden>Logout</button>
+  </div>
+</header>
+
+<main>
+
+  <!-- Auth card -->
+  <div class="card" id="auth-card">
+    <div class="tabs">
+      <button class="tab active" id="tab-login" onclick="switchTab('login')">Login</button>
+      <button class="tab" id="tab-register" onclick="switchTab('register')">Register</button>
+    </div>
+
+    <div id="login-form">
+      <input type="email" id="login-email" placeholder="Email" />
+      <input type="password" id="login-password" placeholder="Password" />
+      <button class="btn btn-primary" onclick="login()">Login</button>
+      <p class="error" id="login-error"></p>
+    </div>
+
+    <div id="register-form" hidden>
+      <input type="text" id="reg-first" placeholder="First name" />
+      <input type="text" id="reg-last" placeholder="Last name" />
+      <input type="email" id="reg-email" placeholder="Email" />
+      <input type="password" id="reg-password" placeholder="Password (min 8 chars)" />
+      <button class="btn btn-primary" onclick="register()">Create account</button>
+      <p class="error" id="reg-error"></p>
+      <p class="success" id="reg-success"></p>
+    </div>
+  </div>
+
+  <!-- Shortener card -->
+  <div class="card" id="shortener-card" hidden>
+    <h2>Shorten a URL</h2>
+    <div class="input-row">
+      <input type="url" id="long-url" placeholder="https://example.com/very/long/url" />
+      <button class="btn btn-primary" onclick="shortenURL()">Shorten</button>
+    </div>
+    <p class="error" id="shorten-error"></p>
+    <p class="success" id="shorten-success"></p>
+  </div>
+
+  <!-- Links card -->
+  <div class="card" id="links-card" hidden>
+    <h2>My Links</h2>
+    <ul id="url-list"><li style="color:var(--muted);font-size:.875rem">No links yet.</li></ul>
+  </div>
+
+</main>
+
+<div id="copy-feedback">Copied!</div>
+
+<script>
+  const API = "";
+  let accessToken = localStorage.getItem("access") || null;
+  let refreshToken = localStorage.getItem("refresh") || null;
+
+  // ── Helpers ──────────────────────────────────────────────────────────────
+  async function apiFetch(path, opts = {}) {
+    const headers = { "Content-Type": "application/json", ...(opts.headers || {}) };
+    if (accessToken) headers["Authorization"] = `Bearer ${accessToken}`;
+    const res = await fetch(API + path, { ...opts, headers });
+    if (res.status === 401 && refreshToken) {
+      const ok = await doRefresh();
+      if (ok) {
+        headers["Authorization"] = `Bearer ${accessToken}`;
+        return fetch(API + path, { ...opts, headers });
+      }
+      logout();
+    }
+    return res;
+  }
+
+  async function doRefresh() {
+    const res = await fetch(API + "/api/auth/token/refresh/", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refresh: refreshToken }),
+    });
+    if (!res.ok) return false;
+    const data = await res.json();
+    accessToken = data.access;
+    refreshToken = data.refresh;
+    localStorage.setItem("access", accessToken);
+    localStorage.setItem("refresh", refreshToken);
+    return true;
+  }
+
+  function saveTokens(data) {
+    accessToken = data.access;
+    refreshToken = data.refresh;
+    localStorage.setItem("access", accessToken);
+    localStorage.setItem("refresh", refreshToken);
+  }
+
+  function switchTab(tab) {
+    document.getElementById("login-form").hidden = tab !== "login";
+    document.getElementById("register-form").hidden = tab !== "register";
+    document.getElementById("tab-login").classList.toggle("active", tab === "login");
+    document.getElementById("tab-register").classList.toggle("active", tab === "register");
+  }
+
+  // ── Auth ─────────────────────────────────────────────────────────────────
+  async function login() {
+    const email = document.getElementById("login-email").value;
+    const password = document.getElementById("login-password").value;
+    const res = await fetch(API + "/api/auth/login/", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+    const data = await res.json();
+    if (!res.ok) { document.getElementById("login-error").textContent = data.detail || "Login failed."; return; }
+    saveTokens(data);
+    onLoggedIn(data.user);
+  }
+
+  async function register() {
+    const body = {
+      email: document.getElementById("reg-email").value,
+      password: document.getElementById("reg-password").value,
+      first_name: document.getElementById("reg-first").value,
+      last_name: document.getElementById("reg-last").value,
+    };
+    const res = await fetch(API + "/api/auth/register/", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      document.getElementById("reg-error").textContent = Object.values(data).flat().join(" ");
+      return;
+    }
+    document.getElementById("reg-success").textContent = "Account created! Please login.";
+    document.getElementById("reg-error").textContent = "";
+    switchTab("login");
+  }
+
+  async function logout() {
+    if (refreshToken) {
+      await apiFetch("/api/auth/logout/", { method: "POST", body: JSON.stringify({ refresh: refreshToken }) });
+    }
+    accessToken = null; refreshToken = null;
+    localStorage.removeItem("access"); localStorage.removeItem("refresh");
+    document.getElementById("auth-card").hidden = false;
+    document.getElementById("shortener-card").hidden = true;
+    document.getElementById("links-card").hidden = true;
+    document.getElementById("user-label").textContent = "";
+    document.getElementById("logout-btn").hidden = true;
+  }
+
+  function onLoggedIn(user) {
+    document.getElementById("auth-card").hidden = true;
+    document.getElementById("shortener-card").hidden = false;
+    document.getElementById("links-card").hidden = false;
+    document.getElementById("user-label").textContent = user.email;
+    document.getElementById("logout-btn").hidden = false;
+    loadLinks();
+  }
+
+  document.getElementById("logout-btn").addEventListener("click", logout);
+
+  // ── Shortener ─────────────────────────────────────────────────────────────
+  async function shortenURL() {
+    const url = document.getElementById("long-url").value.trim();
+    document.getElementById("shorten-error").textContent = "";
+    document.getElementById("shorten-success").textContent = "";
+    if (!url) return;
+    const res = await apiFetch("/api/urls/", { method: "POST", body: JSON.stringify({ original_url: url }) });
+    const data = await res.json();
+    if (!res.ok) { document.getElementById("shorten-error").textContent = data.original_url?.[0] || "Failed to shorten."; return; }
+    document.getElementById("shorten-success").textContent = `Shortened: ${data.short_url}`;
+    document.getElementById("long-url").value = "";
+    loadLinks();
+  }
+
+  async function loadLinks() {
+    const res = await apiFetch("/api/urls/");
+    if (!res.ok) return;
+    const data = await res.json();
+    const list = document.getElementById("url-list");
+    if (!data.length) { list.innerHTML = '<li style="color:var(--muted);font-size:.875rem">No links yet.</li>'; return; }
+    list.innerHTML = data.map(item => `
+      <li>
+        <div class="url-info">
+          <a class="short-link" href="${item.short_url}" target="_blank">${item.short_url}</a>
+          <div class="original" title="${item.original_url}">${item.original_url}</div>
+        </div>
+        <span class="hits">${item.hits} hit${item.hits !== 1 ? "s" : ""}</span>
+        <button class="btn btn-ghost" style="font-size:.78rem;padding:.3rem .6rem" onclick="copyLink('${item.short_url}')">Copy</button>
+        <button class="btn btn-danger" onclick="deleteLink(${item.id})">Delete</button>
+      </li>
+    `).join("");
+  }
+
+  async function deleteLink(id) {
+    const res = await apiFetch(`/api/urls/${id}/`, { method: "DELETE" });
+    if (res.ok) loadLinks();
+  }
+
+  function copyLink(url) {
+    navigator.clipboard.writeText(url);
+    const fb = document.getElementById("copy-feedback");
+    fb.classList.add("show");
+    setTimeout(() => fb.classList.remove("show"), 1800);
+  }
+
+  // ── Init ──────────────────────────────────────────────────────────────────
+  (async function init() {
+    if (!accessToken) return;
+    const res = await apiFetch("/api/auth/me/");
+    if (res.ok) { const user = await res.json(); onLoggedIn(user); }
+    else { accessToken = null; localStorage.removeItem("access"); }
+  })();
+</script>
+
+</body>
+</html>
