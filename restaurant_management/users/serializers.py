@@ -9,7 +9,6 @@ from .models import StaffInvitation
 User = get_user_model()
 
 
-# ── Shared ────────────────────────────────────────────────────────────────────
 
 class UserSerializer(TimestampedModelSerializer):
     full_name = serializers.CharField(read_only=True)
@@ -65,9 +64,6 @@ class ChangePasswordSerializer(serializers.Serializer):
         user.save(update_fields=["password"])
         return user
 
-
-# ── Customer Auth ─────────────────────────────────────────────────────────────
-
 class CustomerRegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, min_length=8)
     password_confirm = serializers.CharField(write_only=True)
@@ -98,7 +94,6 @@ class CustomerLoginSerializer(TokenObtainPairSerializer):
         return data
 
 
-# ── Staff Auth ────────────────────────────────────────────────────────────────
 
 class StaffRegisterSerializer(serializers.ModelSerializer):
     """
@@ -154,7 +149,6 @@ class StaffLoginSerializer(TokenObtainPairSerializer):
         return data
 
 
-# ── Admin Auth ────────────────────────────────────────────────────────────────
 
 class AdminRegisterSerializer(serializers.ModelSerializer):
     """
