@@ -48,8 +48,6 @@ class RegisterSerializer(BaseSerializer):
 class LoginSerializer(BaseSerializer):
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True)
-
-    # These come back in the response — not model fields
     access = serializers.CharField(read_only=True)
     refresh = serializers.CharField(read_only=True)
     user = UserSerializer(read_only=True)
