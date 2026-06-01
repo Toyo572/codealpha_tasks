@@ -14,8 +14,6 @@ from .serializers import (
 from .filters import EventFilter
 
 
-# ── Public event endpoints ────────────────────────────────────────────────────
-
 class EventListView(BaseAPIView):
     """Paginated list of all published events."""
     serializer_class = EventListSerializer
@@ -66,7 +64,7 @@ class EventDetailView(BaseAPIView):
         return success_response(data=serializer.data)
 
 
-# ── Organizer event management ────────────────────────────────────────────────
+
 
 class OrganizerEventListView(BaseAPIView):
     """List all events owned by the organizer / create a new event."""
@@ -138,8 +136,6 @@ class OrganizerEventDetailView(BaseAPIView):
         event.delete()
         return no_content_response("Event deleted successfully.")
 
-
-# ── Categories ────────────────────────────────────────────────────────────────
 
 class CategoryListView(BaseAPIView):
     """List all categories / create one (organizer only)."""
