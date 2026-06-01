@@ -103,7 +103,6 @@ class EventWriteSerializer(BaseSerializer):
 
     def create(self, validated_data):
         validated_data["organizer"] = self.context["request"].user
-        # Auto-generate a unique slug from the title
         base_slug = slugify(validated_data["title"])
         validated_data["slug"] = f"{base_slug}-{uuid.uuid4().hex[:6]}"
         return super().create(validated_data)
