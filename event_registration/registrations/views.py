@@ -1,6 +1,3 @@
-from django.shortcuts import render
-
-# Create your views here.
 from rest_framework.permissions import IsAuthenticated
 from drf_spectacular.utils import extend_schema
 from events.models import Event
