@@ -11,7 +11,6 @@ def custom_exception_handler(exc, context):
     response = exception_handler(exc, context)
 
     if response is None:
-        # Unhandled server error
         return Response(
             {"success": False, "message": "An unexpected error occurred. Please try again later."},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
