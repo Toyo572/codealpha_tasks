@@ -91,7 +91,6 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 AUTH_USER_MODEL = "accounts.User"
 
-# ── DRF ─────────────────────────────────────────────────────────────────────
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework_simplejwt.authentication.JWTAuthentication",
@@ -110,7 +109,6 @@ REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
 
-# ── JWT ──────────────────────────────────────────────────────────────────────
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(days=1),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
@@ -122,18 +120,15 @@ SIMPLE_JWT = {
     "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
 }
 
-# ── Spectacular (OpenAPI → Scalar) ───────────────────────────────────────────
 SPECTACULAR_SETTINGS = {
     "TITLE": "Event Registration API",
     "DESCRIPTION": "API for managing events and user registrations.",
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
-    # Fix enum name collisions for the "status" field across models
     "ENUM_NAME_OVERRIDES": {
         "EventStatusEnum": "events.models.Event.Status",
         "RegistrationStatusEnum": "registrations.models.Registration.Status",
     },
-    # Suppress numeral-suffix collision warnings — they resolve correctly via URL names
     "DISABLE_ERRORS_AND_WARNINGS": False,
     "ENUM_GENERATE_CHOICE_DESCRIPTION": True,
     "POSTPROCESSING_HOOKS": [
