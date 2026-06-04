@@ -4,10 +4,6 @@ from rest_framework.response import Response
 
 
 def custom_exception_handler(exc, context):
-    """
-    Wraps ALL DRF exceptions into the uniform shape:
-        { "success": false, "message": "...", "errors": {...} }
-    """
     response = exception_handler(exc, context)
 
     if response is None:
