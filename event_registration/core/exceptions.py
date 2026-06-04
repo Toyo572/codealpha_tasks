@@ -18,8 +18,7 @@ def custom_exception_handler(exc, context):
 
     error_data = response.data
 
-    # DRF validation errors come back as a dict of field → list-of-messages
-    # or sometimes as a plain list or a {"detail": "..."} string.
+    
     if isinstance(error_data, dict) and "detail" in error_data:
         message = str(error_data["detail"])
         errors = None
